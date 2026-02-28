@@ -1,0 +1,40 @@
+name: Safe Sync Upstream
+
+# Runs every day at midnight (UTC) and allows manual triggering
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Safely merge upstream updates
+        run: |
+          # Add the upstream repository
+          git remote add upstream https://github.com/marketcalls/openalgo.git
+          
+          # Fetch all the accepted updates from the maker
+          git fetch upstream
+          
+          # Checkout your local branch
+          git checkout main
+          
+          # Merge the maker's accepted changes into your fork
+          # --no-edit accepts the default merge message
+          git merge upstream/main --no-edit
+          
+          # Push the successfully merged code to your repository
+          git push origin main
